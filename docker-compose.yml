@@ -1,0 +1,28 @@
+
+version: '3.8'
+services:
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: sellerdb
+      POSTGRES_USER: selleruser
+      POSTGRES_PASSWORD: sellerpass
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./sql:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U selleruser -d sellerdb"]
+      interval: 5s
+      retries: 10
+  backend:
+    build: ./backend
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/sellerdb
+      - SPRING_DATASOURCE_USERNAME=selleruser
+      - SPRING_DATASOURCE_PASSWORD=sellerpass
